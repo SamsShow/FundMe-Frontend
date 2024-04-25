@@ -12,19 +12,24 @@ fundButton.onclick = fund;
 balanceButton.onclick = getBalance;
 
 async function connect() {
-  if (typeof window.ethereum !== "undefined") {
-    try {
-      await ethereum.request({ method: "eth_requestAccounts" });
-    } catch (error) {
-      console.log(error);
+    if (typeof window.ethereum !== "undefined") {
+      try {
+        await ethereum.request({ method: "eth_requestAccounts" });
+        const accounts = await ethereum.request({ method: "eth_accounts" });
+        if (accounts.length > 0) {
+          const shortAddress = accounts[0].slice(0, 6) + '...' + accounts[0].slice(-4);
+          connectButton.innerHTML = `Connected: ${shortAddress}`;
+          console.log(accounts);
+        } else {
+          connectButton.innerHTML = "No accounts found";
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    } else {
+      connectButton.innerHTML = "Please install MetaMask";
     }
-    connectButton.innerHTML = "Connected";
-    const accounts = await ethereum.request({ method: "eth_accounts" });
-    console.log(accounts);
-  } else {
-    connectButton.innerHTML = "Please install MetaMask";
   }
-}
 
 async function withdraw() {
   console.log(`Withdrawing...`);
@@ -36,9 +41,11 @@ async function withdraw() {
     try {
       const transactionResponse = await contract.withdraw();
       await listenForTransactionMine(transactionResponse, provider);
+      document.getElementById('withdrawStatus').innerText = "Transaction Successfull";
       // await transactionResponse.wait(1)
     } catch (error) {
       console.log(error);
+      document.getElementById('withdrawStatus').innerText = "Transaction Failed";
     }
   } else {
     withdrawButton.innerHTML = "Please install MetaMask";
@@ -57,8 +64,10 @@ async function fund() {
         value: ethers.utils.parseEther(ethAmount),
       });
       await listenForTransactionMine(transactionResponse, provider);
+      document.getElementById('fundStatus').innerText = "Successfully Funded";
     } catch (error) {
       console.log(error);
+      document.getElementById('fundStatus').innerText = "Funding Failed";
     }
   } else {
     fundButton.innerHTML = "Please install MetaMask";
@@ -71,6 +80,7 @@ async function getBalance() {
     try {
       const balance = await provider.getBalance(contractAddress);
       console.log(ethers.utils.formatEther(balance));
+      document.getElementById('balanceDisplay').innerText = `Balance: ${ethers.utils.formatEther(balance)} ETH`;
     } catch (error) {
       console.log(error);
     }
